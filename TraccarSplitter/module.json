@@ -1,0 +1,18 @@
+{
+    "id": "{B02E003C-7A70-C422-C417-0E41DC1CE86D}",
+    "name": "Traccar Splitter",
+    "type": 2,
+    "vendor": "mwlf01",
+    "aliases": [
+        "Traccar Server"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [
+        "{595D0659-EEE7-C3A6-7F61-2F145327A6AE}"
+    ],
+    "implemented": [
+        "{D6BB3A8B-2C57-050E-0D98-7853B4E18BAE}"
+    ],
+    "prefix": "TRACCAR",
+    "url": "https://github.com/mwlf01/IPSymcon-Traccar"
+}

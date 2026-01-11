@@ -1,0 +1,28 @@
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+
+# Debug/Test files
+dump.txt
+*.dump
+test.php
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*~
+
+# PHP
+composer.lock
+vendor/

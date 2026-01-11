@@ -1,0 +1,22 @@
+{
+    "translations": {
+        "de": {
+            "Server Settings": "Server-Einstellungen",
+            "Traccar Server Host": "Traccar Server Host",
+            "Port": "Port",
+            "Use HTTPS": "HTTPS verwenden",
+            "Authentication": "Authentifizierung",
+            "API Token": "API-Token",
+            "Generate an API token in Traccar: Settings → Account → Token": "API-Token in Traccar generieren: Einstellungen → Konto → Token",
+            "Update Settings": "Aktualisierungseinstellungen",
+            "Update Interval": "Aktualisierungsintervall",
+            "Test Connection": "Verbindung testen",
+            "Refresh Session": "Sitzung erneuern",
+            "Update All Devices": "Alle Geräte aktualisieren",
+            "Connected to Traccar server": "Verbunden mit Traccar-Server",
+            "Cannot connect to Traccar server": "Verbindung zum Traccar-Server nicht möglich",
+            "Invalid API token": "Ungültiger API-Token",
+            "Configuration incomplete": "Konfiguration unvollständig"
+        }
+    }
+}

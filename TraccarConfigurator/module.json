@@ -1,0 +1,18 @@
+{
+    "id": "{E8976645-AEE9-0864-92A6-27612B7B46DD}",
+    "name": "Traccar Configurator",
+    "type": 4,
+    "vendor": "mwlf01",
+    "aliases": [
+        "Traccar Konfigurator"
+    ],
+    "parentRequirements": [
+        "{D6BB3A8B-2C57-050E-0D98-7853B4E18BAE}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{595D0659-EEE7-C3A6-7F61-2F145327A6AE}"
+    ],
+    "prefix": "TRACCARCONF",
+    "url": "https://github.com/mwlf01/IPSymcon-Traccar"
+}

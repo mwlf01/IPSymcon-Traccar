@@ -1,0 +1,12 @@
+{
+    "id": "{74ED7AF1-23E0-B599-4B70-A67F9AB12C1B}",
+    "name": "Traccar",
+    "author": "mwlf01",
+    "url": "https://github.com/mwlf01/IPSymcon-Traccar",
+    "compatibility": {
+        "version": "7.0"
+    },
+    "version": "1.0.0",
+    "build": 1,
+    "date": 20260111
+}

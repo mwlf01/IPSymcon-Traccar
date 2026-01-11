@@ -1,0 +1,18 @@
+{
+    "id": "{24B39122-FE4C-99E7-586E-CB0DEE1508AC}",
+    "name": "Traccar Device",
+    "type": 3,
+    "vendor": "mwlf01",
+    "aliases": [
+        "Traccar Gerät"
+    ],
+    "parentRequirements": [
+        "{D6BB3A8B-2C57-050E-0D98-7853B4E18BAE}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{595D0659-EEE7-C3A6-7F61-2F145327A6AE}"
+    ],
+    "prefix": "TRACCARDEV",
+    "url": "https://github.com/mwlf01/IPSymcon-Traccar"
+}

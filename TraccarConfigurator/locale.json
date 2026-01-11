@@ -1,0 +1,19 @@
+{
+    "translations": {
+        "de": {
+            "This configurator lists all devices from your Traccar server.": "Dieser Konfigurator listet alle Geräte von Ihrem Traccar-Server auf.",
+            "Click the \"+\" button to create a device instance.": "Klicken Sie auf \"+\" um eine Geräteinstanz zu erstellen.",
+            "Traccar Devices": "Traccar Geräte",
+            "Name": "Name",
+            "Unique ID": "Eindeutige ID",
+            "Status": "Status",
+            "Category": "Kategorie",
+            "Model": "Modell",
+            "Last Update": "Letzte Aktualisierung",
+            "Refresh Device List": "Geräteliste aktualisieren",
+            "Online": "Online",
+            "Offline": "Offline",
+            "Unknown": "Unbekannt"
+        }
+    }
+}
