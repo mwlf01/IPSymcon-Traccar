@@ -43,27 +43,27 @@ class TraccarConfigurator extends IPSModule
                         [
                             'caption' => 'Name',
                             'name' => 'name',
-                            'width' => '200px'
+                            'width' => '300px'
                         ],
                         [
                             'caption' => 'Unique ID',
                             'name' => 'uniqueId',
-                            'width' => '150px'
+                            'width' => 'auto'
                         ],
                         [
                             'caption' => 'Status',
                             'name' => 'status',
-                            'width' => '100px'
+                            'width' => '150px'
                         ],
                         [
                             'caption' => 'Category',
                             'name' => 'category',
-                            'width' => '100px'
+                            'width' => '150px'
                         ],
                         [
                             'caption' => 'Model',
                             'name' => 'model',
-                            'width' => '100px'
+                            'width' => '150px'
                         ],
                         [
                             'caption' => 'Last Update',
@@ -119,6 +119,7 @@ class TraccarConfigurator extends IPSModule
     {
         $values = [];
         $existingInstances = $this->GetExistingInstances();
+        $matchedInstanceIds = [];
 
         foreach ($devices as $device) {
             $deviceId = $device['id'] ?? 0;
@@ -157,9 +158,26 @@ class TraccarConfigurator extends IPSModule
 
             if ($instanceId > 0) {
                 $value['instanceID'] = $instanceId;
+                $matchedInstanceIds[] = $instanceId;
             }
 
             $values[] = $value;
+        }
+
+        foreach ($existingInstances as $deviceId => $instanceId) {
+            if (!in_array($instanceId, $matchedInstanceIds)) {
+                $deviceName = IPS_GetProperty($instanceId, 'DeviceName');
+                $uniqueId = IPS_GetProperty($instanceId, 'UniqueID');
+                $values[] = [
+                    'name' => $deviceName ?: $this->Translate('Unknown'),
+                    'uniqueId' => $uniqueId ?: '',
+                    'status' => $this->Translate('Not found in Traccar'),
+                    'category' => '',
+                    'model' => '',
+                    'lastUpdate' => '',
+                    'instanceID' => $instanceId
+                ];
+            }
         }
 
         return $values;
@@ -169,8 +187,14 @@ class TraccarConfigurator extends IPSModule
     {
         $instances = [];
         $moduleGUID = '{24B39122-FE4C-99E7-586E-CB0DEE1508AC}';
+        $mySplitterId = IPS_GetInstance($this->InstanceID)['ConnectionID'];
 
         foreach (IPS_GetInstanceListByModuleID($moduleGUID) as $instanceId) {
+            $instanceSplitterId = IPS_GetInstance($instanceId)['ConnectionID'];
+            if ($instanceSplitterId !== $mySplitterId) {
+                continue;
+            }
+
             $deviceId = IPS_GetProperty($instanceId, 'DeviceID');
             if ($deviceId > 0) {
                 $instances[$deviceId] = $instanceId;

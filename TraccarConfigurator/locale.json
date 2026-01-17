@@ -13,7 +13,8 @@
             "Refresh Device List": "Geräteliste aktualisieren",
             "Online": "Online",
             "Offline": "Offline",
-            "Unknown": "Unbekannt"
+            "Unknown": "Unbekannt",
+            "Not found in Traccar": "Nicht mehr in Traccar vorhanden"
         }
     }
 }

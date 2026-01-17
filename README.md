@@ -162,18 +162,22 @@ Each Traccar Device instance can create the following variables:
 | Variable | Type | Description |
 |----------|------|-------------|
 | **Status** | String | Online/Offline status |
+| **Last Update** | Integer | Unix timestamp of last position update |
 | **Latitude** | Float | GPS latitude in degrees |
 | **Longitude** | Float | GPS longitude in degrees |
 | **Altitude** | Float | Altitude in meters |
+| **Address** | String | Reverse-geocoded address |
 | **Speed** | Float | Current speed in km/h |
 | **Course** | Float | Heading/bearing in degrees |
-| **Address** | String | Reverse-geocoded address |
+| **Geofence** | String | Names of geofences the device is in |
+| **Geofence IDs** | String | IDs of geofences the device is in |
 | **Accuracy** | Float | GPS accuracy in meters |
-| **Last Update** | Integer | Unix timestamp of last position update |
-| **GPS Valid** | Boolean | Whether GPS fix is valid |
-| **Protocol** | String | Tracking protocol (e.g., osmand, teltonika) |
+| **Position Valid** | Boolean | Whether GPS fix is valid |
 | **Satellites** | Integer | Number of GPS satellites |
 | **HDOP** | Float | Horizontal dilution of precision |
+| **Protocol** | String | Tracking protocol (e.g., osmand, teltonika) |
+| **Device Time** | Integer | Timestamp from the device |
+| **Server Time** | Integer | Timestamp from the server |
 | **Battery** | Integer | Battery level in percent (for phones) |
 | **Battery Voltage** | Float | Battery voltage in V (for GPS trackers) |
 | **Charging** | Boolean | Whether device is charging |
@@ -181,16 +185,18 @@ Each Traccar Device instance can create the following variables:
 | **Motion** | Boolean | Whether the device is moving |
 | **Ignition** | Boolean | Vehicle ignition status |
 | **Alarm** | String | Alarm status |
-| **Activity** | String | Activity state (still, walking, etc.) |
 | **Total Distance** | Float | Total distance traveled in km |
 | **Odometer** | Float | Device odometer in km |
 | **Trip Distance** | Float | Current trip distance in km |
 | **Engine Hours** | Float | Engine running hours |
-| **Signal Strength** | Integer | RSSI signal strength in dBm |
 | **Fuel Level** | Float | Fuel level in percent |
+| **Signal Strength** | Integer | RSSI signal strength in dBm |
+| **Activity** | String | Activity state (still, walking, etc.) |
 | **Category** | String | Device category |
 | **Model** | String | Device model |
 | **Phone** | String | Associated phone number |
+| **Contact** | String | Contact information |
+| **Disabled** | Boolean | Whether the device is disabled in Traccar |
 
 ---
 
@@ -309,6 +315,14 @@ array TRACCARDEV_GetRawAttributes(int $InstanceID);
 ---
 
 ## Changelog
+
+### Version 1.1.0 (2026-01-17)
+- Added separate Geofence Names and Geofence IDs variables
+- Added Device Time and Server Time variables
+- Added Contact and Disabled variables
+- Improved variable ordering into logical groups
+- Improved German translations
+- Code cleanup and optimizations
 
 ### Version 1.0.0 (2026-01-11)
 - Initial release

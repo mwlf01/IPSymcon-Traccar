@@ -286,11 +286,19 @@ class TraccarSplitter extends IPSModule
 
         $devices = $this->GetDevices();
         $positions = $this->GetPositions();
+        $geofences = $this->GetGeofences();
 
         $positionMap = [];
         foreach ($positions as $position) {
             if (isset($position['deviceId'])) {
                 $positionMap[$position['deviceId']] = $position;
+            }
+        }
+
+        $geofenceMap = [];
+        foreach ($geofences as $geofence) {
+            if (isset($geofence['id'])) {
+                $geofenceMap[$geofence['id']] = $geofence['name'] ?? '';
             }
         }
 
@@ -301,7 +309,7 @@ class TraccarSplitter extends IPSModule
             }
 
             $position = $positionMap[$deviceId] ?? [];
-            $this->ProcessDeviceUpdate($device, $position);
+            $this->ProcessDeviceUpdate($device, $position, $geofenceMap);
         }
     }
 
@@ -327,7 +335,7 @@ class TraccarSplitter extends IPSModule
         return json_encode($response);
     }
 
-    private function ProcessDeviceUpdate(array $device, array $position): void
+    private function ProcessDeviceUpdate(array $device, array $position, array $geofenceMap = []): void
     {
         $deviceId = $device['id'] ?? ($position['deviceId'] ?? 0);
 
@@ -337,7 +345,8 @@ class TraccarSplitter extends IPSModule
             'DataID' => '{595D0659-EEE7-C3A6-7F61-2F145327A6AE}',
             'deviceId' => $deviceId,
             'device' => $device,
-            'position' => $position
+            'position' => $position,
+            'geofenceMap' => $geofenceMap
         ]));
     }
 
