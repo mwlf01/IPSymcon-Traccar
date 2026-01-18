@@ -1,6 +1,6 @@
 # Traccar for IP-Symcon
 
-[![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-7.0+-blue.svg)](https://www.symcon.de)
+[![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-8.1+-blue.svg)](https://www.symcon.de)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 An IP-Symcon module library for integrating [Traccar](https://www.traccar.org/) GPS tracking server via its REST API.
@@ -41,7 +41,7 @@ An IP-Symcon module library for integrating [Traccar](https://www.traccar.org/) 
 
 ## Requirements
 
-- IP-Symcon 7.0 or higher
+- IP-Symcon 8.1 or higher
 - Traccar Server (self-hosted or [Traccar subscription](https://www.traccar.org/product/tracking-server/))
 - Network access to your Traccar server
 
@@ -316,7 +316,7 @@ array TRACCARDEV_GetRawAttributes(int $InstanceID);
 
 ## Changelog
 
-### Version 1.1.0 (2026-01-17)
+### Version 1.1.0
 - Added separate Geofence Names and Geofence IDs variables
 - Added Device Time and Server Time variables
 - Added Contact and Disabled variables
@@ -324,7 +324,7 @@ array TRACCARDEV_GetRawAttributes(int $InstanceID);
 - Improved German translations
 - Code cleanup and optimizations
 
-### Version 1.0.0 (2026-01-11)
+### Version 1.0.0
 - Initial release
 - Traccar Splitter module for server connection with session-based authentication
 - Traccar Configurator for device discovery
