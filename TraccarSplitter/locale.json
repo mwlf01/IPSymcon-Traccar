@@ -1,6 +1,7 @@
 {
     "translations": {
         "de": {
+            "Traccar Server": "Traccar Server",
             "Server Settings": "Server-Einstellungen",
             "Traccar Server Host": "Traccar Server Host",
             "Port": "Port",

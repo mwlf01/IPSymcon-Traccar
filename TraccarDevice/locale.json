@@ -1,6 +1,7 @@
 {
     "translations": {
         "de": {
+            "Traccar Device": "Traccar Gerät",
             "Device Information": "Geräteinformationen",
             "Traccar Device ID": "Traccar Geräte-ID",
             "Device Name": "Gerätename",

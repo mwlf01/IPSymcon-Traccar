@@ -1,6 +1,7 @@
 {
     "translations": {
         "de": {
+            "Traccar Configurator": "Traccar Konfigurator",
             "This configurator lists all devices from your Traccar server.": "Dieser Konfigurator listet alle Geräte von Ihrem Traccar-Server auf.",
             "Click the \"+\" button to create a device instance.": "Klicken Sie auf \"+\" um eine Geräteinstanz zu erstellen.",
             "Traccar Devices": "Traccar Geräte",

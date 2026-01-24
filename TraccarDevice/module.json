@@ -4,7 +4,7 @@
     "type": 3,
     "vendor": "mwlf01",
     "aliases": [
-        "Traccar Gerät"
+        "Traccar Device"
     ],
     "parentRequirements": [
         "{D6BB3A8B-2C57-050E-0D98-7853B4E18BAE}"
