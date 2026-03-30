@@ -342,6 +342,7 @@ array TRACCARDEV_GetRawAttributes(int $InstanceID);
 For issues, feature requests, or contributions, please visit:
 - [GitHub Repository](https://github.com/mwlf01/IPSymcon-Traccar)
 - [GitHub Issues](https://github.com/mwlf01/IPSymcon-Traccar/issues)
+- [Symcon Community](https://community.symcon.de/) – User: **mwlf**
 - [Traccar Documentation](https://www.traccar.org/documentation/)
 
 ---
@@ -357,6 +358,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **mwlf01**
 
 - GitHub: [@mwlf01](https://github.com/mwlf01)
+- Symcon Community: [mwlf](https://community.symcon.de/)
 
 ---
 
