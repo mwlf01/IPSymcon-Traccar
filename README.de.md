@@ -316,6 +316,9 @@ array TRACCARDEV_GetRawAttributes(int $InstanceID);
 
 ## Änderungsprotokoll
 
+### Version 1.1.1
+- Warnung behoben, wenn keine übergeordnete Instanz bei RequestUpdate verbunden ist
+
 ### Version 1.1.0
 - Separate Variablen für Geofence-Namen und Geofence-IDs hinzugefügt
 - Variablen für Gerätezeit und Serverzeit hinzugefügt

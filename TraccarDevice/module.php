@@ -267,6 +267,10 @@ class TraccarDevice extends IPSModule
             return;
         }
 
+        if (!$this->HasActiveParent()) {
+            return;
+        }
+
         $data = [
             'DataID' => '{D6BB3A8B-2C57-050E-0D98-7853B4E18BAE}',
             'Buffer' => json_encode([

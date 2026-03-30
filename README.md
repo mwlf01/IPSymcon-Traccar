@@ -316,6 +316,9 @@ array TRACCARDEV_GetRawAttributes(int $InstanceID);
 
 ## Changelog
 
+### Version 1.1.1
+- Fixed warning when no parent instance is connected during RequestUpdate
+
 ### Version 1.1.0
 - Added separate Geofence Names and Geofence IDs variables
 - Added Device Time and Server Time variables
