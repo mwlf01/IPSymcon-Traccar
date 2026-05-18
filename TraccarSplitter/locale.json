@@ -6,6 +6,7 @@
             "Traccar Server Host": "Traccar Server Host",
             "Port": "Port",
             "Use HTTPS": "HTTPS verwenden",
+            "Verify TLS Certificate": "TLS-Zertifikat prüfen",
             "Authentication": "Authentifizierung",
             "API Token": "API-Token",
             "Generate an API token in Traccar: Settings → Account → Token": "API-Token in Traccar generieren: Einstellungen → Konto → Token",

@@ -1,4 +1,14 @@
 <?php
+
+/*
+ * Traccar Device for IP-Symcon
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * Copyright (c) 2026 mwlf01
+ *
+ * Licensed under the EUPL, Version 1.2. See the LICENSE file for the full text.
+ */
+
 declare(strict_types=1);
 
 class TraccarDevice extends IPSModule
@@ -66,63 +76,33 @@ class TraccarDevice extends IPSModule
 
         if ($deviceId === 0) {
             $this->SetStatus(self::STATUS_INACTIVE);
+            $this->SetReceiveDataFilter('(?!)');
             return;
         }
 
-        $pos = 1;
-        // Status & Time
-        $this->MaintainVariable('Status', $this->Translate('Status'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => 'online', 'Caption' => $this->Translate('Online'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => true, 'ColorValue' => 0x00FF00], ['Value' => 'Online', 'Caption' => $this->Translate('Online'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => true, 'ColorValue' => 0x00FF00], ['Value' => 'offline', 'Caption' => $this->Translate('Offline'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => true, 'ColorValue' => 0xFF0000], ['Value' => 'Offline', 'Caption' => $this->Translate('Offline'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => true, 'ColorValue' => 0xFF0000], ['Value' => 'unknown', 'Caption' => $this->Translate('Unknown'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => 'Unknown', 'Caption' => $this->Translate('Unknown'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowStatus'));
-        $this->MaintainVariable('LastUpdate', $this->Translate('Last Update'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_DATE_TIME], $pos++, $this->ReadPropertyBoolean('ShowLastUpdate'));
-        // Position
-        $this->MaintainVariable('Latitude', $this->Translate('Latitude'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 8, 'SUFFIX' => '°'], $pos++, $this->ReadPropertyBoolean('ShowLatitude'));
-        $this->MaintainVariable('Longitude', $this->Translate('Longitude'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 8, 'SUFFIX' => '°'], $pos++, $this->ReadPropertyBoolean('ShowLongitude'));
-        $this->MaintainVariable('Altitude', $this->Translate('Altitude'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' m'], $pos++, $this->ReadPropertyBoolean('ShowAltitude'));
-        $this->MaintainVariable('Address', $this->Translate('Address'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowAddress'));
-        // Movement
-        $this->MaintainVariable('Speed', $this->Translate('Speed'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' km/h'], $pos++, $this->ReadPropertyBoolean('ShowSpeed'));
-        $this->MaintainVariable('Course', $this->Translate('Course'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => '°'], $pos++, $this->ReadPropertyBoolean('ShowCourse'));
-        // Geofence
-        $this->MaintainVariable('Geofence', $this->Translate('Geofence'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowGeofence'));
-        $this->MaintainVariable('GeofenceIds', $this->Translate('Geofence IDs'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowGeofenceIds'));
-        // GPS Quality
-        $this->MaintainVariable('Accuracy', $this->Translate('Accuracy'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' m'], $pos++, $this->ReadPropertyBoolean('ShowAccuracy'));
-        $this->MaintainVariable('Valid', $this->Translate('Position Valid'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('Invalid'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('Valid'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowValid'));
-        $this->MaintainVariable('Satellites', $this->Translate('Satellites'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowSatellites'));
-        $this->MaintainVariable('HDOP', $this->Translate('HDOP'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1], $pos++, $this->ReadPropertyBoolean('ShowHDOP'));
-        $this->MaintainVariable('Protocol', $this->Translate('Protocol'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowProtocol'));
-        // Time Details
-        $this->MaintainVariable('DeviceTime', $this->Translate('Device Time'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_DATE_TIME], $pos++, $this->ReadPropertyBoolean('ShowDeviceTime'));
-        $this->MaintainVariable('ServerTime', $this->Translate('Server Time'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_DATE_TIME], $pos++, $this->ReadPropertyBoolean('ShowServerTime'));
-        // Power
-        $this->MaintainVariable('Battery', $this->Translate('Battery'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'SUFFIX' => ' %'], $pos++, $this->ReadPropertyBoolean('ShowBattery'));
-        $this->MaintainVariable('BatteryVoltage', $this->Translate('Battery Voltage'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' V'], $pos++, $this->ReadPropertyBoolean('ShowBatteryVoltage'));
-        $this->MaintainVariable('Charge', $this->Translate('Charging'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('No'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('Yes'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowCharge'));
-        $this->MaintainVariable('Power', $this->Translate('External Power'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' V'], $pos++, $this->ReadPropertyBoolean('ShowPower'));
-        // Vehicle State
-        $this->MaintainVariable('Motion', $this->Translate('Motion'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('No'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('Yes'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowMotion'));
-        $this->MaintainVariable('Ignition', $this->Translate('Ignition'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('Off'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('On'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowIgnition'));
-        $this->MaintainVariable('Alarm', $this->Translate('Alarm'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowAlarm'));
-        // Distance & Usage
-        $this->MaintainVariable('TotalDistance', $this->Translate('Total Distance'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' km'], $pos++, $this->ReadPropertyBoolean('ShowTotalDistance'));
-        $this->MaintainVariable('Odometer', $this->Translate('Odometer'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' km'], $pos++, $this->ReadPropertyBoolean('ShowOdometer'));
-        $this->MaintainVariable('Distance', $this->Translate('Trip Distance'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' km'], $pos++, $this->ReadPropertyBoolean('ShowDistance'));
-        $this->MaintainVariable('Hours', $this->Translate('Engine Hours'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' h'], $pos++, $this->ReadPropertyBoolean('ShowHours'));
-        // Other Sensors
-        $this->MaintainVariable('Fuel', $this->Translate('Fuel Level'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' %'], $pos++, $this->ReadPropertyBoolean('ShowFuel'));
-        $this->MaintainVariable('RSSI', $this->Translate('Signal Strength'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'SUFFIX' => ' dBm'], $pos++, $this->ReadPropertyBoolean('ShowRSSI'));
-        $this->MaintainVariable('Activity', $this->Translate('Activity'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowActivity'));
-        // Device Properties
-        $this->MaintainVariable('Category', $this->Translate('Category'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowCategory'));
-        $this->MaintainVariable('Model', $this->Translate('Model'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowModel'));
-        $this->MaintainVariable('Phone', $this->Translate('Phone'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowPhone'));
-        $this->MaintainVariable('Contact', $this->Translate('Contact'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowContact'));
-        $this->MaintainVariable('Disabled', $this->Translate('Disabled'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('No'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('Yes'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => true, 'ColorValue' => 0xFF0000]])], $pos++, $this->ReadPropertyBoolean('ShowDisabled'));
+        $this->MaintainVariables();
+        $this->SetReceiveDataFilter('.*"deviceId":' . $deviceId . '[,}].*');
 
-        $this->SetReceiveDataFilter('.*"deviceId":' . $deviceId . '.*');
+        // Subscribe to parent status changes and kernel-started so the device
+        // self-recovers when the splitter becomes active later (Symcon >= 9.0
+        // wires the parent asynchronously, so HasActiveParent() inside
+        // ApplyChanges is not reliable).
+        $this->RegisterMessage(0, IPS_KERNELSTARTED);
+        $parentId = IPS_GetInstance($this->InstanceID)['ConnectionID'];
+        if ($parentId > 0) {
+            $this->RegisterMessage($parentId, IM_CHANGESTATUS);
+        }
 
-        $this->SetStatus(self::STATUS_ACTIVE);
+        $this->UpdateConnectionStatus();
+    }
 
-        $this->RequestUpdate();
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    {
+        parent::MessageSink($TimeStamp, $SenderID, $Message, $Data);
+
+        if ($Message === IPS_KERNELSTARTED || $Message === IM_CHANGESTATUS) {
+            $this->UpdateConnectionStatus();
+        }
     }
 
     public function GetConfigurationForm(): string
@@ -134,24 +114,9 @@ class TraccarDevice extends IPSModule
                     'caption' => 'Device Information',
                     'expanded' => true,
                     'items' => [
-                        [
-                            'type' => 'NumberSpinner',
-                            'name' => 'DeviceID',
-                            'caption' => 'Traccar Device ID',
-                            'enabled' => false
-                        ],
-                        [
-                            'type' => 'ValidationTextBox',
-                            'name' => 'DeviceName',
-                            'caption' => 'Device Name',
-                            'enabled' => false
-                        ],
-                        [
-                            'type' => 'ValidationTextBox',
-                            'name' => 'UniqueID',
-                            'caption' => 'Unique ID',
-                            'enabled' => false
-                        ]
+                        ['type' => 'NumberSpinner', 'name' => 'DeviceID', 'caption' => 'Traccar Device ID', 'enabled' => false],
+                        ['type' => 'ValidationTextBox', 'name' => 'DeviceName', 'caption' => 'Device Name', 'enabled' => false],
+                        ['type' => 'ValidationTextBox', 'name' => 'UniqueID', 'caption' => 'Unique ID', 'enabled' => false]
                     ]
                 ],
                 [
@@ -218,21 +183,9 @@ class TraccarDevice extends IPSModule
                 ]
             ],
             'status' => [
-                [
-                    'code' => self::STATUS_ACTIVE,
-                    'icon' => 'active',
-                    'caption' => 'Connected and receiving data'
-                ],
-                [
-                    'code' => self::STATUS_INACTIVE,
-                    'icon' => 'inactive',
-                    'caption' => 'No Traccar device configured'
-                ],
-                [
-                    'code' => self::STATUS_NO_PARENT,
-                    'icon' => 'error',
-                    'caption' => 'No Traccar Splitter instance connected'
-                ]
+                ['code' => self::STATUS_ACTIVE, 'icon' => 'active', 'caption' => 'Connected and receiving data'],
+                ['code' => self::STATUS_INACTIVE, 'icon' => 'inactive', 'caption' => 'No Traccar device configured'],
+                ['code' => self::STATUS_NO_PARENT, 'icon' => 'error', 'caption' => 'No Traccar Splitter instance connected']
             ]
         ]);
     }
@@ -251,9 +204,7 @@ class TraccarDevice extends IPSModule
         $myDeviceId = $this->ReadPropertyInteger('DeviceID');
         $deviceId = $data['deviceId'] ?? ($device['id'] ?? ($position['deviceId'] ?? 0));
 
-        $this->SendDebug('ReceiveData', "Received deviceId: {$deviceId}, myDeviceId: {$myDeviceId}", 0);
-
-        if ($deviceId !== $myDeviceId) {
+        if ((int)$deviceId !== $myDeviceId) {
             return;
         }
 
@@ -267,46 +218,12 @@ class TraccarDevice extends IPSModule
             return;
         }
 
-        if (!$this->HasActiveParent()) {
+        $parentId = IPS_GetInstance($this->InstanceID)['ConnectionID'];
+        if ($parentId === 0 || IPS_GetInstance($parentId)['InstanceStatus'] !== self::STATUS_ACTIVE) {
             return;
         }
 
-        $data = [
-            'DataID' => '{D6BB3A8B-2C57-050E-0D98-7853B4E18BAE}',
-            'Buffer' => json_encode([
-                'Method' => 'GET',
-                'Endpoint' => '/api/devices?id=' . $deviceId,
-                'Body' => null
-            ])
-        ];
-        $response = $this->SendDataToParent(json_encode($data));
-
-        if ($response !== false && $response !== '') {
-            $devices = json_decode($response, true);
-            if (is_array($devices) && count($devices) > 0) {
-                $device = $devices[0];
-
-                $posData = [
-                    'DataID' => '{D6BB3A8B-2C57-050E-0D98-7853B4E18BAE}',
-                    'Buffer' => json_encode([
-                        'Method' => 'GET',
-                        'Endpoint' => '/api/positions?deviceId=' . $deviceId,
-                        'Body' => null
-                    ])
-                ];
-                $positionResponse = $this->SendDataToParent(json_encode($posData));
-
-                $position = [];
-                if ($positionResponse !== false && $positionResponse !== '') {
-                    $positions = json_decode($positionResponse, true);
-                    if (is_array($positions) && count($positions) > 0) {
-                        $position = $positions[0];
-                    }
-                }
-
-                $this->UpdateDeviceData($device, $position);
-            }
-        }
+        TRACCAR_UpdateDevices($parentId);
     }
 
     public function GetPosition(): array
@@ -321,38 +238,123 @@ class TraccarDevice extends IPSModule
             'lastUpdate' => 0
         ];
 
-        if ($this->ReadPropertyBoolean('ShowLatitude')) {
+        if ($this->ReadPropertyBoolean('ShowLatitude') && @$this->GetIDForIdent('Latitude')) {
             $result['latitude'] = $this->GetValue('Latitude');
         }
-        if ($this->ReadPropertyBoolean('ShowLongitude')) {
+        if ($this->ReadPropertyBoolean('ShowLongitude') && @$this->GetIDForIdent('Longitude')) {
             $result['longitude'] = $this->GetValue('Longitude');
         }
-        if ($this->ReadPropertyBoolean('ShowAltitude')) {
+        if ($this->ReadPropertyBoolean('ShowAltitude') && @$this->GetIDForIdent('Altitude')) {
             $result['altitude'] = $this->GetValue('Altitude');
         }
-        if ($this->ReadPropertyBoolean('ShowSpeed')) {
+        if ($this->ReadPropertyBoolean('ShowSpeed') && @$this->GetIDForIdent('Speed')) {
             $result['speed'] = $this->GetValue('Speed');
         }
-        if ($this->ReadPropertyBoolean('ShowCourse')) {
+        if ($this->ReadPropertyBoolean('ShowCourse') && @$this->GetIDForIdent('Course')) {
             $result['course'] = $this->GetValue('Course');
         }
-        if ($this->ReadPropertyBoolean('ShowAddress')) {
+        if ($this->ReadPropertyBoolean('ShowAddress') && @$this->GetIDForIdent('Address')) {
             $result['address'] = $this->GetValue('Address');
         }
-        if ($this->ReadPropertyBoolean('ShowLastUpdate')) {
+        if ($this->ReadPropertyBoolean('ShowLastUpdate') && @$this->GetIDForIdent('LastUpdate')) {
             $result['lastUpdate'] = $this->GetValue('LastUpdate');
         }
 
         return $result;
     }
 
+    public function GetRawAttributes(): array
+    {
+        $raw = $this->ReadAttributeString('RawAttributes');
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function UpdateConnectionStatus(): void
+    {
+        $deviceId = $this->ReadPropertyInteger('DeviceID');
+        if ($deviceId === 0) {
+            $this->SetStatus(self::STATUS_INACTIVE);
+            return;
+        }
+
+        $parentId = IPS_GetInstance($this->InstanceID)['ConnectionID'];
+        if ($parentId === 0 || IPS_GetInstance($parentId)['InstanceStatus'] !== self::STATUS_ACTIVE) {
+            if ($this->GetStatus() !== self::STATUS_NO_PARENT) {
+                $this->SetStatus(self::STATUS_NO_PARENT);
+            }
+            return;
+        }
+
+        $wasInactive = $this->GetStatus() !== self::STATUS_ACTIVE;
+        $this->SetStatus(self::STATUS_ACTIVE);
+
+        if ($wasInactive) {
+            $this->RequestUpdate();
+        }
+    }
+
+    private function MaintainVariables(): void
+    {
+        $pos = 1;
+        // Status & Time
+        $statusOptions = json_encode([
+            ['Value' => 'online', 'Caption' => $this->Translate('Online'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => true, 'ColorValue' => 0x00FF00],
+            ['Value' => 'offline', 'Caption' => $this->Translate('Offline'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => true, 'ColorValue' => 0xFF0000],
+            ['Value' => 'unknown', 'Caption' => $this->Translate('Unknown'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]
+        ]);
+        $this->MaintainVariable('Status', $this->Translate('Connection Status'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => $statusOptions], $pos++, $this->ReadPropertyBoolean('ShowStatus'));
+        $this->MaintainVariable('LastUpdate', $this->Translate('Last Update'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_DATE_TIME], $pos++, $this->ReadPropertyBoolean('ShowLastUpdate'));
+        // Position
+        $this->MaintainVariable('Latitude', $this->Translate('Latitude'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 8, 'SUFFIX' => '°'], $pos++, $this->ReadPropertyBoolean('ShowLatitude'));
+        $this->MaintainVariable('Longitude', $this->Translate('Longitude'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 8, 'SUFFIX' => '°'], $pos++, $this->ReadPropertyBoolean('ShowLongitude'));
+        $this->MaintainVariable('Altitude', $this->Translate('Altitude'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' m'], $pos++, $this->ReadPropertyBoolean('ShowAltitude'));
+        $this->MaintainVariable('Address', $this->Translate('Address'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowAddress'));
+        // Movement
+        $this->MaintainVariable('Speed', $this->Translate('Speed'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' km/h'], $pos++, $this->ReadPropertyBoolean('ShowSpeed'));
+        $this->MaintainVariable('Course', $this->Translate('Course'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => '°'], $pos++, $this->ReadPropertyBoolean('ShowCourse'));
+        // Geofence
+        $this->MaintainVariable('Geofence', $this->Translate('Geofence Names'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowGeofence'));
+        $this->MaintainVariable('GeofenceIds', $this->Translate('Geofence IDs'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowGeofenceIds'));
+        // GPS Quality
+        $this->MaintainVariable('Accuracy', $this->Translate('Accuracy'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' m'], $pos++, $this->ReadPropertyBoolean('ShowAccuracy'));
+        $this->MaintainVariable('Valid', $this->Translate('Position Valid'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('Invalid'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('Valid'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowValid'));
+        $this->MaintainVariable('Satellites', $this->Translate('Satellites'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowSatellites'));
+        $this->MaintainVariable('HDOP', $this->Translate('HDOP'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1], $pos++, $this->ReadPropertyBoolean('ShowHDOP'));
+        $this->MaintainVariable('Protocol', $this->Translate('Protocol'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowProtocol'));
+        // Time Details
+        $this->MaintainVariable('DeviceTime', $this->Translate('Device Time'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_DATE_TIME], $pos++, $this->ReadPropertyBoolean('ShowDeviceTime'));
+        $this->MaintainVariable('ServerTime', $this->Translate('Server Time'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_DATE_TIME], $pos++, $this->ReadPropertyBoolean('ShowServerTime'));
+        // Power
+        $this->MaintainVariable('Battery', $this->Translate('Battery'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'SUFFIX' => ' %'], $pos++, $this->ReadPropertyBoolean('ShowBattery'));
+        $this->MaintainVariable('BatteryVoltage', $this->Translate('Battery Voltage'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' V'], $pos++, $this->ReadPropertyBoolean('ShowBatteryVoltage'));
+        $this->MaintainVariable('Charge', $this->Translate('Charging'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('No'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('Yes'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowCharge'));
+        $this->MaintainVariable('Power', $this->Translate('External Power'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' V'], $pos++, $this->ReadPropertyBoolean('ShowPower'));
+        // Vehicle State
+        $this->MaintainVariable('Motion', $this->Translate('Motion'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('No'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('Yes'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowMotion'));
+        $this->MaintainVariable('Ignition', $this->Translate('Ignition'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('Off'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('On'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1]])], $pos++, $this->ReadPropertyBoolean('ShowIgnition'));
+        $this->MaintainVariable('Alarm', $this->Translate('Alarm'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowAlarm'));
+        // Distance & Usage
+        $this->MaintainVariable('TotalDistance', $this->Translate('Total Distance'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' km'], $pos++, $this->ReadPropertyBoolean('ShowTotalDistance'));
+        $this->MaintainVariable('Odometer', $this->Translate('Odometer'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' km'], $pos++, $this->ReadPropertyBoolean('ShowOdometer'));
+        $this->MaintainVariable('Distance', $this->Translate('Trip Distance'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 2, 'SUFFIX' => ' km'], $pos++, $this->ReadPropertyBoolean('ShowDistance'));
+        $this->MaintainVariable('Hours', $this->Translate('Engine Hours'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' h'], $pos++, $this->ReadPropertyBoolean('ShowHours'));
+        // Other Sensors
+        $this->MaintainVariable('Fuel', $this->Translate('Fuel Level'), VARIABLETYPE_FLOAT, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'DIGITS' => 1, 'SUFFIX' => ' %'], $pos++, $this->ReadPropertyBoolean('ShowFuel'));
+        $this->MaintainVariable('RSSI', $this->Translate('Signal Strength'), VARIABLETYPE_INTEGER, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'SUFFIX' => ' dBm'], $pos++, $this->ReadPropertyBoolean('ShowRSSI'));
+        $this->MaintainVariable('Activity', $this->Translate('Activity'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowActivity'));
+        // Device Properties
+        $this->MaintainVariable('Category', $this->Translate('Category'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowCategory'));
+        $this->MaintainVariable('Model', $this->Translate('Model'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowModel'));
+        $this->MaintainVariable('Phone', $this->Translate('Phone'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowPhone'));
+        $this->MaintainVariable('Contact', $this->Translate('Contact'), VARIABLETYPE_STRING, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION], $pos++, $this->ReadPropertyBoolean('ShowContact'));
+        $this->MaintainVariable('Disabled', $this->Translate('Disabled'), VARIABLETYPE_BOOLEAN, ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'OPTIONS' => json_encode([['Value' => false, 'Caption' => $this->Translate('No'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => false, 'ColorValue' => -1], ['Value' => true, 'Caption' => $this->Translate('Yes'), 'IconActive' => false, 'IconValue' => '', 'ColorActive' => true, 'ColorValue' => 0xFF0000]])], $pos++, $this->ReadPropertyBoolean('ShowDisabled'));
+    }
+
     private function UpdateDeviceData(array $device, array $position, array $geofenceMap = []): void
     {
-        $this->SendDebug('UpdateDeviceData', 'Device: ' . json_encode($device), 0);
-        $this->SendDebug('UpdateDeviceData', 'Position: ' . json_encode($position), 0);
-
         if ($this->ReadPropertyBoolean('ShowStatus') && isset($device['status'])) {
-            $this->SetValue('Status', $device['status']);
+            $this->SetValue('Status', strtolower((string)$device['status']));
         }
 
         if (!empty($position)) {
@@ -403,34 +405,7 @@ class TraccarDevice extends IPSModule
                 $this->SetValue('Protocol', (string)$position['protocol']);
             }
 
-            if (isset($position['geofenceIds'])) {
-                $geofenceIds = $position['geofenceIds'];
-                $hasGeofences = is_array($geofenceIds) && count($geofenceIds) > 0;
-
-                if ($this->ReadPropertyBoolean('ShowGeofence')) {
-                    if ($hasGeofences) {
-                        $geofenceNames = [];
-                        foreach ($geofenceIds as $geoId) {
-                            if (isset($geofenceMap[$geoId]) && $geofenceMap[$geoId] !== '') {
-                                $geofenceNames[] = $geofenceMap[$geoId];
-                            } else {
-                                $geofenceNames[] = (string)$geoId;
-                            }
-                        }
-                        $this->SetValue('Geofence', implode(', ', $geofenceNames));
-                    } else {
-                        $this->SetValue('Geofence', '');
-                    }
-                }
-
-                if ($this->ReadPropertyBoolean('ShowGeofenceIds')) {
-                    if ($hasGeofences) {
-                        $this->SetValue('GeofenceIds', implode(', ', $geofenceIds));
-                    } else {
-                        $this->SetValue('GeofenceIds', '');
-                    }
-                }
-            }
+            $this->UpdateGeofenceVariables($position, $geofenceMap);
 
             if ($this->ReadPropertyBoolean('ShowDeviceTime') && isset($position['deviceTime'])) {
                 $timestamp = strtotime($position['deviceTime']);
@@ -449,94 +424,7 @@ class TraccarDevice extends IPSModule
             $attributes = $position['attributes'] ?? [];
             $this->WriteAttributeString('RawAttributes', json_encode($attributes));
 
-            if ($this->ReadPropertyBoolean('ShowSatellites')) {
-                $sats = $attributes['sat'] ?? ($attributes['satellites'] ?? null);
-                if ($sats !== null) {
-                    $this->SetValue('Satellites', (int)$sats);
-                }
-            }
-
-            if ($this->ReadPropertyBoolean('ShowHDOP')) {
-                $hdop = $attributes['hdop'] ?? null;
-                if ($hdop !== null) {
-                    $this->SetValue('HDOP', (float)$hdop);
-                }
-            }
-
-            if ($this->ReadPropertyBoolean('ShowBattery')) {
-                $battery = $attributes['batteryLevel'] ?? null;
-                if ($battery !== null && $battery >= 0 && $battery <= 100) {
-                    $this->SetValue('Battery', (int)$battery);
-                }
-            }
-
-            if ($this->ReadPropertyBoolean('ShowCharge') && isset($attributes['charge'])) {
-                $this->SetValue('Charge', (bool)$attributes['charge']);
-            }
-
-            if ($this->ReadPropertyBoolean('ShowPower')) {
-                $power = $attributes['power'] ?? null;
-                if ($power !== null) {
-                    $this->SetValue('Power', (float)$power);
-                }
-            }
-
-            if ($this->ReadPropertyBoolean('ShowMotion') && isset($attributes['motion'])) {
-                $this->SetValue('Motion', (bool)$attributes['motion']);
-            }
-
-            if ($this->ReadPropertyBoolean('ShowIgnition') && isset($attributes['ignition'])) {
-                $this->SetValue('Ignition', (bool)$attributes['ignition']);
-            }
-
-            if ($this->ReadPropertyBoolean('ShowAlarm') && isset($attributes['alarm'])) {
-                $this->SetValue('Alarm', (string)$attributes['alarm']);
-            }
-
-            if ($this->ReadPropertyBoolean('ShowTotalDistance') && isset($attributes['totalDistance'])) {
-                $distanceKm = (float)$attributes['totalDistance'] / 1000;
-                $this->SetValue('TotalDistance', round($distanceKm, 2));
-            }
-
-            if ($this->ReadPropertyBoolean('ShowOdometer') && isset($attributes['odometer'])) {
-                $odometerKm = (float)$attributes['odometer'] / 1000;
-                $this->SetValue('Odometer', round($odometerKm, 2));
-            }
-
-            if ($this->ReadPropertyBoolean('ShowDistance') && isset($attributes['distance'])) {
-                $distanceKm = (float)$attributes['distance'] / 1000;
-                $this->SetValue('Distance', round($distanceKm, 2));
-            }
-
-            if ($this->ReadPropertyBoolean('ShowHours') && isset($attributes['hours'])) {
-                $hours = (float)$attributes['hours'] / 3600000;
-                $this->SetValue('Hours', round($hours, 1));
-            }
-
-            if ($this->ReadPropertyBoolean('ShowBatteryVoltage')) {
-                $batteryV = $attributes['battery'] ?? null;
-                if ($batteryV !== null && is_numeric($batteryV) && $batteryV < 50) {
-                    $this->SetValue('BatteryVoltage', round((float)$batteryV, 2));
-                }
-            }
-
-            if ($this->ReadPropertyBoolean('ShowActivity') && isset($attributes['activity'])) {
-                $this->SetValue('Activity', (string)$attributes['activity']);
-            }
-
-            if ($this->ReadPropertyBoolean('ShowRSSI')) {
-                $rssi = $attributes['rssi'] ?? null;
-                if ($rssi !== null) {
-                    $this->SetValue('RSSI', (int)$rssi);
-                }
-            }
-
-            if ($this->ReadPropertyBoolean('ShowFuel')) {
-                $fuel = $attributes['fuel'] ?? ($attributes['fuelLevel'] ?? null);
-                if ($fuel !== null) {
-                    $this->SetValue('Fuel', (float)$fuel);
-                }
-            }
+            $this->UpdateAttributeVariables($attributes);
 
             if (isset($position['id'])) {
                 $this->WriteAttributeInteger('LastPositionID', (int)$position['id']);
@@ -564,9 +452,115 @@ class TraccarDevice extends IPSModule
         }
     }
 
-    public function GetRawAttributes(): array
+    private function UpdateGeofenceVariables(array $position, array $geofenceMap): void
     {
-        $raw = $this->ReadAttributeString('RawAttributes');
-        return json_decode($raw, true) ?: [];
+        $geofenceIds = $position['geofenceIds'] ?? [];
+        $hasGeofences = is_array($geofenceIds) && count($geofenceIds) > 0;
+
+        if ($this->ReadPropertyBoolean('ShowGeofence')) {
+            if ($hasGeofences) {
+                $names = [];
+                foreach ($geofenceIds as $geoId) {
+                    $names[] = $geofenceMap[$geoId] ?? $geofenceMap[(string)$geoId] ?? (string)$geoId;
+                }
+                $this->SetValue('Geofence', implode(', ', $names));
+            } else {
+                $this->SetValue('Geofence', '');
+            }
+        }
+
+        if ($this->ReadPropertyBoolean('ShowGeofenceIds')) {
+            $this->SetValue('GeofenceIds', $hasGeofences ? implode(', ', $geofenceIds) : '');
+        }
+    }
+
+    private function UpdateAttributeVariables(array $attributes): void
+    {
+        if ($this->ReadPropertyBoolean('ShowSatellites')) {
+            $sats = $attributes['sat'] ?? ($attributes['satellites'] ?? null);
+            if ($sats !== null) {
+                $this->SetValue('Satellites', (int)$sats);
+            }
+        }
+
+        if ($this->ReadPropertyBoolean('ShowHDOP') && isset($attributes['hdop'])) {
+            $this->SetValue('HDOP', (float)$attributes['hdop']);
+        }
+
+        if ($this->ReadPropertyBoolean('ShowBattery')) {
+            $battery = $attributes['batteryLevel'] ?? null;
+            if ($battery !== null && $battery >= 0 && $battery <= 100) {
+                $this->SetValue('Battery', (int)$battery);
+            }
+        }
+
+        if ($this->ReadPropertyBoolean('ShowBatteryVoltage')) {
+            $voltage = $this->ResolveBatteryVoltage($attributes);
+            if ($voltage !== null) {
+                $this->SetValue('BatteryVoltage', round($voltage, 2));
+            }
+        }
+
+        if ($this->ReadPropertyBoolean('ShowCharge') && isset($attributes['charge'])) {
+            $this->SetValue('Charge', (bool)$attributes['charge']);
+        }
+
+        if ($this->ReadPropertyBoolean('ShowPower') && isset($attributes['power'])) {
+            $this->SetValue('Power', (float)$attributes['power']);
+        }
+
+        if ($this->ReadPropertyBoolean('ShowMotion') && isset($attributes['motion'])) {
+            $this->SetValue('Motion', (bool)$attributes['motion']);
+        }
+
+        if ($this->ReadPropertyBoolean('ShowIgnition') && isset($attributes['ignition'])) {
+            $this->SetValue('Ignition', (bool)$attributes['ignition']);
+        }
+
+        if ($this->ReadPropertyBoolean('ShowAlarm')) {
+            $this->SetValue('Alarm', isset($attributes['alarm']) ? (string)$attributes['alarm'] : '');
+        }
+
+        if ($this->ReadPropertyBoolean('ShowTotalDistance') && isset($attributes['totalDistance'])) {
+            $this->SetValue('TotalDistance', round((float)$attributes['totalDistance'] / 1000, 2));
+        }
+
+        if ($this->ReadPropertyBoolean('ShowOdometer') && isset($attributes['odometer'])) {
+            $this->SetValue('Odometer', round((float)$attributes['odometer'] / 1000, 2));
+        }
+
+        if ($this->ReadPropertyBoolean('ShowDistance') && isset($attributes['distance'])) {
+            $this->SetValue('Distance', round((float)$attributes['distance'] / 1000, 2));
+        }
+
+        if ($this->ReadPropertyBoolean('ShowHours') && isset($attributes['hours'])) {
+            $this->SetValue('Hours', round((float)$attributes['hours'] / 3600000, 1));
+        }
+
+        if ($this->ReadPropertyBoolean('ShowActivity') && isset($attributes['activity'])) {
+            $this->SetValue('Activity', (string)$attributes['activity']);
+        }
+
+        if ($this->ReadPropertyBoolean('ShowRSSI') && isset($attributes['rssi'])) {
+            $this->SetValue('RSSI', (int)$attributes['rssi']);
+        }
+
+        if ($this->ReadPropertyBoolean('ShowFuel') && isset($attributes['fuelLevel'])) {
+            $this->SetValue('Fuel', (float)$attributes['fuelLevel']);
+        }
+    }
+
+    // Traccar 'battery' is volts on GPS trackers but unitless/percent on some
+    // phones. Treat as voltage only when a separate batteryLevel (percent) is
+    // also reported — the convention used by OsmAnd and most tracker protocols.
+    private function ResolveBatteryVoltage(array $attributes): ?float
+    {
+        if (!isset($attributes['battery']) || !is_numeric($attributes['battery'])) {
+            return null;
+        }
+        if (!isset($attributes['batteryLevel'])) {
+            return null;
+        }
+        return (float)$attributes['battery'];
     }
 }

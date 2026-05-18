@@ -1,7 +1,7 @@
 # Traccar for IP-Symcon
 
 [![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-8.1+-blue.svg)](https://www.symcon.de)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](LICENSE)
 
 An IP-Symcon module library for integrating [Traccar](https://www.traccar.org/) GPS tracking server via its REST API.
 
@@ -85,10 +85,10 @@ This library contains three modules that work together:
 The **Traccar Splitter** module handles the connection to your Traccar server. It manages authentication via API token and provides API access to all child modules.
 
 **Features:**
-- Server connection configuration (host, port, HTTPS)
-- API Token authentication with session management
+- Server connection configuration (host, port, HTTPS, TLS certificate verification)
+- API Token authentication with session cookie, including automatic session refresh on expiration
 - Configurable update interval (default: 30 seconds)
-- Connection testing and session refresh
+- Connection testing
 
 ### Traccar Configurator
 
@@ -128,6 +128,7 @@ The **Traccar Device** module represents a single tracked device and displays it
    - **Traccar Server Host**: Your Traccar server hostname or IP (e.g., `demo.traccar.org`)
    - **Port**: API port (default: 443 for HTTPS)
    - **Use HTTPS**: Enable for secure connections (recommended)
+   - **Verify TLS Certificate**: Validate the server's TLS certificate (recommended; disable only for self-signed setups)
    - **API Token**: Generate in Traccar under Settings → Account → Token
    - **Update Interval**: How often to poll for updates (default: 30 seconds)
 5. Click **Test Connection** to verify
@@ -254,7 +255,7 @@ void TRACCAR_UpdateDevices(int $InstanceID);
 ```
 
 #### RefreshSession
-Refresh the API session (use if connection times out).
+Forces creation of a new session (useful if the cookie became invalid outside of the regular polling cycle). The splitter also refreshes the session automatically when a request returns HTTP 401.
 
 ```php
 bool TRACCAR_RefreshSession(int $InstanceID);
@@ -299,7 +300,7 @@ array TRACCARDEV_GetRawAttributes(int $InstanceID);
 - Verify the server hostname and port are correct
 - Check if HTTPS is required for your server
 - Ensure your API token is valid and not expired
-- Try clicking "Refresh Session" in the Splitter configuration
+- If the server uses a self-signed certificate, disable **Verify TLS Certificate**
 - Test the API directly: `https://your-server/api/server`
 
 ### Devices Not Showing
@@ -315,6 +316,24 @@ array TRACCARDEV_GetRawAttributes(int $InstanceID);
 ---
 
 ## Changelog
+
+### Version 1.2.0
+- **License**: relicensed from MIT to EUPL v. 1.2. The new licence is in the `LICENSE` file; an SPDX header has been added to every module source file.
+- **Authentication**: kept the session-cookie model for full backwards compatibility. The splitter now automatically re-establishes the session when a request returns HTTP 401, and multiple `Set-Cookie` headers are merged correctly. The token is no longer written to the debug log.
+- **Device status tracking**: device instances now subscribe to the splitter's status changes via `MessageSink` (`IM_CHANGESTATUS` and `IPS_KERNELSTARTED`). This fixes the false *No Traccar Splitter instance connected* error on Symcon 9.0+, where `HasActiveParent()` inside `ApplyChanges` is not reliable because the parent connection is established asynchronously.
+- **Security**: API token, session cookies and full API response bodies are no longer written to the debug log; only HTTP code and payload size.
+- **Security**: new **Verify TLS Certificate** option (default on) replaces the previously hard-coded disabled certificate verification.
+- **Receive filter precision**: the device-side receive-data filter is now anchored so that device ID `1` no longer matches IDs like `10`, `100`, `11`, etc.
+- **Self-healing status**: a successful API request after a previous failure now restores the `Active` status without manual intervention.
+- **No-parent detection**: device instances now report status `No parent` correctly, driven by the splitter's actual status rather than a one-shot check during `ApplyChanges`.
+- **Geofence cache**: geofence list is cached for 5 minutes per splitter, reducing API load.
+- **RequestUpdate**: the device's `Update Now` now delegates to the splitter, ensuring consistent data (including geofence names) and removing a duplicate update path.
+- **Configurator**: form opens immediately when the splitter is inactive, with a hint instead of blocking on a 30-second timeout.
+- **HTTP timeouts**: reduced default request timeout from 30 s to 15 s and added a 5 s connect timeout.
+- **Battery voltage**: only written when both `battery` and `batteryLevel` attributes are present (the convention for tracker hardware), replacing the previous `< 50` heuristic.
+- **Fuel level**: only reads `fuelLevel` (percent); the ambiguous `fuel` attribute (often litres) is ignored to avoid wrong units.
+- **Alarm**: cleared when no alarm is reported, instead of keeping the last value.
+- **Status normalization**: `Status` variable always stored lowercase; duplicate presentation options removed.
 
 ### Version 1.1.1
 - Fixed warning when no parent instance is connected during RequestUpdate
@@ -349,7 +368,11 @@ For issues, feature requests, or contributions, please visit:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **European Union Public Licence (EUPL) v. 1.2** — see the [LICENSE](LICENSE) file for the full text.
+
+The EUPL is a copyleft licence: derivative works that are distributed must also be released under the EUPL or a compatible licence (e.g. GPL, AGPL, MPL, LGPL — see the appendix of the EUPL for the full compatibility list). Earlier releases up to version 1.1.1 remain available under the previous MIT licence.
+
+The EUPL is published in 24 official language versions, all legally equivalent. Other language versions are available on the [official EU page](https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12).
 
 ---
 

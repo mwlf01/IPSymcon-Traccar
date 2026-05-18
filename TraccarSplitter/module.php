@@ -1,4 +1,14 @@
 <?php
+
+/*
+ * Traccar Splitter for IP-Symcon
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * Copyright (c) 2026 mwlf01
+ *
+ * Licensed under the EUPL, Version 1.2. See the LICENSE file for the full text.
+ */
+
 declare(strict_types=1);
 
 class TraccarSplitter extends IPSModule
@@ -8,6 +18,10 @@ class TraccarSplitter extends IPSModule
     private const STATUS_INVALID_TOKEN = 202;
     private const STATUS_CONFIGURATION_ERROR = 203;
 
+    private const HTTP_TIMEOUT = 15;
+    private const CONNECT_TIMEOUT = 5;
+    private const GEOFENCE_CACHE_TTL = 300;
+
     public function Create()
     {
         parent::Create();
@@ -15,10 +29,13 @@ class TraccarSplitter extends IPSModule
         $this->RegisterPropertyString('Host', '');
         $this->RegisterPropertyInteger('Port', 443);
         $this->RegisterPropertyBoolean('UseHTTPS', true);
+        $this->RegisterPropertyBoolean('VerifySSL', true);
         $this->RegisterPropertyString('Token', '');
         $this->RegisterPropertyInteger('UpdateInterval', 30);
 
         $this->RegisterAttributeString('SessionCookie', '');
+        $this->RegisterAttributeString('GeofenceCache', '{}');
+        $this->RegisterAttributeInteger('GeofenceCacheTime', 0);
 
         $this->RegisterTimer('UpdateTimer', 0, 'TRACCAR_UpdateDevices($_IPS[\'TARGET\']);');
     }
@@ -27,18 +44,13 @@ class TraccarSplitter extends IPSModule
     {
         parent::ApplyChanges();
 
+        $this->SetTimerInterval('UpdateTimer', 0);
+
         $host = $this->ReadPropertyString('Host');
         $token = $this->ReadPropertyString('Token');
 
-        if (empty($host)) {
+        if (empty($host) || empty($token)) {
             $this->SetStatus(self::STATUS_CONFIGURATION_ERROR);
-            $this->SetTimerInterval('UpdateTimer', 0);
-            return;
-        }
-
-        if (empty($token)) {
-            $this->SetStatus(self::STATUS_CONFIGURATION_ERROR);
-            $this->SetTimerInterval('UpdateTimer', 0);
             return;
         }
 
@@ -46,71 +58,7 @@ class TraccarSplitter extends IPSModule
             $this->SetStatus(self::STATUS_ACTIVE);
             $interval = $this->ReadPropertyInteger('UpdateInterval');
             $this->SetTimerInterval('UpdateTimer', $interval * 1000);
-        } else {
-            $this->SetTimerInterval('UpdateTimer', 0);
         }
-    }
-
-    private function CreateSession(): bool
-    {
-        $host = $this->ReadPropertyString('Host');
-        $port = $this->ReadPropertyInteger('Port');
-        $useHTTPS = $this->ReadPropertyBoolean('UseHTTPS');
-        $token = $this->ReadPropertyString('Token');
-
-        $protocol = $useHTTPS ? 'https' : 'http';
-        if (($useHTTPS && $port === 443) || (!$useHTTPS && $port === 80)) {
-            $url = "{$protocol}://{$host}/api/session?token=" . urlencode($token);
-        } else {
-            $url = "{$protocol}://{$host}:{$port}/api/session?token=" . urlencode($token);
-        }
-
-        $this->SendDebug('CreateSession', "URL: {$url}", 0);
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_HEADER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json']);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($error) {
-            $this->SendDebug('CreateSession Error', $error, 0);
-            $this->SetStatus(self::STATUS_NO_CONNECTION);
-            return false;
-        }
-
-        $headers = substr($response, 0, $headerSize);
-        $this->SendDebug('CreateSession Response', "HTTP {$httpCode}", 0);
-
-        if ($httpCode === 401) {
-            $this->SetStatus(self::STATUS_INVALID_TOKEN);
-            return false;
-        }
-
-        if ($httpCode >= 400) {
-            $this->SendDebug('CreateSession Error', "HTTP Error {$httpCode}", 0);
-            $this->SetStatus(self::STATUS_NO_CONNECTION);
-            return false;
-        }
-
-        preg_match('/Set-Cookie:\s*([^;\r\n]+)/i', $headers, $matches);
-        if (isset($matches[1])) {
-            $this->WriteAttributeString('SessionCookie', $matches[1]);
-            $this->SendDebug('CreateSession', "Cookie: {$matches[1]}", 0);
-            return true;
-        }
-
-        $this->SendDebug('CreateSession Error', 'No session cookie received', 0);
-        $this->SetStatus(self::STATUS_NO_CONNECTION);
-        return false;
     }
 
     public function GetConfigurationForm(): string
@@ -122,24 +70,10 @@ class TraccarSplitter extends IPSModule
                     'caption' => 'Server Settings',
                     'expanded' => true,
                     'items' => [
-                        [
-                            'type' => 'ValidationTextBox',
-                            'name' => 'Host',
-                            'caption' => 'Traccar Server Host',
-                            'width' => '400px'
-                        ],
-                        [
-                            'type' => 'NumberSpinner',
-                            'name' => 'Port',
-                            'caption' => 'Port',
-                            'minimum' => 1,
-                            'maximum' => 65535
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'UseHTTPS',
-                            'caption' => 'Use HTTPS'
-                        ]
+                        ['type' => 'ValidationTextBox', 'name' => 'Host', 'caption' => 'Traccar Server Host', 'width' => '400px'],
+                        ['type' => 'NumberSpinner', 'name' => 'Port', 'caption' => 'Port', 'minimum' => 1, 'maximum' => 65535],
+                        ['type' => 'CheckBox', 'name' => 'UseHTTPS', 'caption' => 'Use HTTPS'],
+                        ['type' => 'CheckBox', 'name' => 'VerifySSL', 'caption' => 'Verify TLS Certificate']
                     ]
                 ],
                 [
@@ -147,30 +81,15 @@ class TraccarSplitter extends IPSModule
                     'caption' => 'Authentication',
                     'expanded' => true,
                     'items' => [
-                        [
-                            'type' => 'PasswordTextBox',
-                            'name' => 'Token',
-                            'caption' => 'API Token',
-                            'width' => '400px'
-                        ],
-                        [
-                            'type' => 'Label',
-                            'caption' => 'Generate an API token in Traccar: Settings → Account → Token'
-                        ]
+                        ['type' => 'PasswordTextBox', 'name' => 'Token', 'caption' => 'API Token', 'width' => '400px'],
+                        ['type' => 'Label', 'caption' => 'Generate an API token in Traccar: Settings → Account → Token']
                     ]
                 ],
                 [
                     'type' => 'ExpansionPanel',
                     'caption' => 'Update Settings',
                     'items' => [
-                        [
-                            'type' => 'NumberSpinner',
-                            'name' => 'UpdateInterval',
-                            'caption' => 'Update Interval',
-                            'minimum' => 5,
-                            'maximum' => 3600,
-                            'suffix' => ' s'
-                        ]
+                        ['type' => 'NumberSpinner', 'name' => 'UpdateInterval', 'caption' => 'Update Interval', 'minimum' => 5, 'maximum' => 3600, 'suffix' => ' s']
                     ]
                 ]
             ],
@@ -192,26 +111,10 @@ class TraccarSplitter extends IPSModule
                 ]
             ],
             'status' => [
-                [
-                    'code' => self::STATUS_ACTIVE,
-                    'icon' => 'active',
-                    'caption' => 'Connected to Traccar server'
-                ],
-                [
-                    'code' => self::STATUS_NO_CONNECTION,
-                    'icon' => 'error',
-                    'caption' => 'Cannot connect to Traccar server'
-                ],
-                [
-                    'code' => self::STATUS_INVALID_TOKEN,
-                    'icon' => 'error',
-                    'caption' => 'Invalid API token'
-                ],
-                [
-                    'code' => self::STATUS_CONFIGURATION_ERROR,
-                    'icon' => 'error',
-                    'caption' => 'Configuration incomplete'
-                ]
+                ['code' => self::STATUS_ACTIVE, 'icon' => 'active', 'caption' => 'Connected to Traccar server'],
+                ['code' => self::STATUS_NO_CONNECTION, 'icon' => 'error', 'caption' => 'Cannot connect to Traccar server'],
+                ['code' => self::STATUS_INVALID_TOKEN, 'icon' => 'error', 'caption' => 'Invalid API token'],
+                ['code' => self::STATUS_CONFIGURATION_ERROR, 'icon' => 'error', 'caption' => 'Configuration incomplete']
             ]
         ]);
     }
@@ -221,11 +124,7 @@ class TraccarSplitter extends IPSModule
         if (!$this->CreateSession()) {
             return false;
         }
-        $response = $this->APIRequest('GET', '/api/server');
-        if ($response === false) {
-            return false;
-        }
-        return true;
+        return is_array($this->APIRequest('GET', '/api/server'));
     }
 
     public function RefreshSession(): bool
@@ -236,19 +135,13 @@ class TraccarSplitter extends IPSModule
     public function GetDevices(): array
     {
         $response = $this->APIRequest('GET', '/api/devices');
-        if ($response === false) {
-            return [];
-        }
-        return $response;
+        return is_array($response) ? $response : [];
     }
 
     public function GetPositions(): array
     {
         $response = $this->APIRequest('GET', '/api/positions');
-        if ($response === false) {
-            return [];
-        }
-        return $response;
+        return is_array($response) ? $response : [];
     }
 
     public function GetDevicePosition(int $deviceId): array
@@ -265,40 +158,27 @@ class TraccarSplitter extends IPSModule
     public function GetGeofences(): array
     {
         $response = $this->APIRequest('GET', '/api/geofences');
-        if ($response === false) {
-            return [];
-        }
-        return $response;
+        return is_array($response) ? $response : [];
     }
 
     public function GetServerInfo(): array
     {
         $response = $this->APIRequest('GET', '/api/server');
-        if ($response === false) {
-            return [];
-        }
-        return $response;
+        return is_array($response) ? $response : [];
     }
 
     public function UpdateDevices(): void
     {
-        $this->SendDebug('UpdateDevices', 'Updating all device instances...', 0);
+        $this->SendDebug('UpdateDevices', 'Updating all device instances', 0);
 
         $devices = $this->GetDevices();
         $positions = $this->GetPositions();
-        $geofences = $this->GetGeofences();
+        $geofenceMap = $this->GetGeofenceMap();
 
         $positionMap = [];
         foreach ($positions as $position) {
             if (isset($position['deviceId'])) {
                 $positionMap[$position['deviceId']] = $position;
-            }
-        }
-
-        $geofenceMap = [];
-        foreach ($geofences as $geofence) {
-            if (isset($geofence['id'])) {
-                $geofenceMap[$geofence['id']] = $geofence['name'] ?? '';
             }
         }
 
@@ -323,23 +203,47 @@ class TraccarSplitter extends IPSModule
             $buffer = $data;
         }
 
-        if (!isset($buffer['Method']) || !isset($buffer['Endpoint'])) {
-            return json_encode(['error' => 'Invalid request']);
+        if (!is_array($buffer) || !isset($buffer['Method'], $buffer['Endpoint'])) {
+            return '';
         }
 
-        $method = $buffer['Method'];
-        $endpoint = $buffer['Endpoint'];
-        $body = $buffer['Body'] ?? null;
+        $response = $this->APIRequest($buffer['Method'], $buffer['Endpoint'], $buffer['Body'] ?? null);
+        if ($response === false) {
+            return '';
+        }
 
-        $response = $this->APIRequest($method, $endpoint, $body);
         return json_encode($response);
+    }
+
+    private function GetGeofenceMap(): array
+    {
+        $cacheTime = $this->ReadAttributeInteger('GeofenceCacheTime');
+        $now = time();
+
+        if ($cacheTime > 0 && ($now - $cacheTime) < self::GEOFENCE_CACHE_TTL) {
+            $cached = json_decode($this->ReadAttributeString('GeofenceCache'), true);
+            if (is_array($cached)) {
+                return $cached;
+            }
+        }
+
+        $geofences = $this->GetGeofences();
+        $map = [];
+        foreach ($geofences as $geofence) {
+            if (isset($geofence['id'])) {
+                $map[$geofence['id']] = $geofence['name'] ?? '';
+            }
+        }
+
+        $this->WriteAttributeString('GeofenceCache', json_encode($map));
+        $this->WriteAttributeInteger('GeofenceCacheTime', $now);
+
+        return $map;
     }
 
     private function ProcessDeviceUpdate(array $device, array $position, array $geofenceMap = []): void
     {
         $deviceId = $device['id'] ?? ($position['deviceId'] ?? 0);
-
-        $this->SendDebug('ProcessDeviceUpdate', "Sending update for deviceId: {$deviceId}", 0);
 
         $this->SendDataToChildren(json_encode([
             'DataID' => '{595D0659-EEE7-C3A6-7F61-2F145327A6AE}',
@@ -350,39 +254,114 @@ class TraccarSplitter extends IPSModule
         ]));
     }
 
-    private function APIRequest(string $method, string $endpoint, ?array $body = null)
+    private function CreateSession(): bool
     {
         $host = $this->ReadPropertyString('Host');
-        $port = $this->ReadPropertyInteger('Port');
-        $useHTTPS = $this->ReadPropertyBoolean('UseHTTPS');
-        $sessionCookie = $this->ReadAttributeString('SessionCookie');
+        $token = $this->ReadPropertyString('Token');
+        $verifySSL = $this->ReadPropertyBoolean('VerifySSL');
 
-        $protocol = $useHTTPS ? 'https' : 'http';
-        
-        if (($useHTTPS && $port === 443) || (!$useHTTPS && $port === 80)) {
-            $url = "{$protocol}://{$host}{$endpoint}";
-        } else {
-            $url = "{$protocol}://{$host}:{$port}{$endpoint}";
+        if (empty($host) || empty($token)) {
+            return false;
         }
 
-        $this->SendDebug('APIRequest', "Method: {$method}, URL: {$url}", 0);
+        // Traccar accepts the token-based session login only as a GET request
+        // with the token as a query parameter; a POST body is rejected (HTTP 400).
+        $url = $this->BuildURL('/api/session') . '?token=' . urlencode($token);
+        $this->SendDebug('CreateSession', 'GET /api/session', 0);
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : 0);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json']);
 
-        if (!empty($sessionCookie)) {
-            curl_setopt($ch, CURLOPT_COOKIE, $sessionCookie);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error !== '') {
+            $this->SendDebug('CreateSession', "cURL error: {$error}", 0);
+            $this->SetStatus(self::STATUS_NO_CONNECTION);
+            return false;
         }
 
-        $headers = [
+        $this->SendDebug('CreateSession', "HTTP {$httpCode}", 0);
+
+        if ($httpCode === 401 || $httpCode === 403) {
+            $this->SetStatus(self::STATUS_INVALID_TOKEN);
+            return false;
+        }
+
+        if ($httpCode >= 400) {
+            $this->SetStatus(self::STATUS_NO_CONNECTION);
+            return false;
+        }
+
+        $headers = substr((string)$response, 0, $headerSize);
+        $cookies = [];
+        if (preg_match_all('/Set-Cookie:\s*([^;\r\n]+)/i', $headers, $matches)) {
+            $cookies = $matches[1];
+        }
+
+        if (empty($cookies)) {
+            $this->SendDebug('CreateSession', 'No session cookie received', 0);
+            $this->SetStatus(self::STATUS_NO_CONNECTION);
+            return false;
+        }
+
+        $this->WriteAttributeString('SessionCookie', implode('; ', $cookies));
+        return true;
+    }
+
+    private function BuildURL(string $endpoint): string
+    {
+        $host = $this->ReadPropertyString('Host');
+        $port = $this->ReadPropertyInteger('Port');
+        $useHTTPS = $this->ReadPropertyBoolean('UseHTTPS');
+
+        $protocol = $useHTTPS ? 'https' : 'http';
+        $defaultPort = $useHTTPS ? 443 : 80;
+
+        if ($port === $defaultPort) {
+            return "{$protocol}://{$host}{$endpoint}";
+        }
+        return "{$protocol}://{$host}:{$port}{$endpoint}";
+    }
+
+    private function APIRequest(string $method, string $endpoint, ?array $body = null, bool $allowRetry = true)
+    {
+        $verifySSL = $this->ReadPropertyBoolean('VerifySSL');
+        $sessionCookie = $this->ReadAttributeString('SessionCookie');
+
+        if (empty($sessionCookie)) {
+            if (!$allowRetry || !$this->CreateSession()) {
+                return false;
+            }
+            $sessionCookie = $this->ReadAttributeString('SessionCookie');
+        }
+
+        $url = $this->BuildURL($endpoint);
+        $this->SendDebug('APIRequest', "{$method} {$endpoint}", 0);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $verifySSL);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $verifySSL ? 2 : 0);
+        curl_setopt($ch, CURLOPT_COOKIE, $sessionCookie);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Accept: application/json',
             'Content-Type: application/json'
-        ];
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        ]);
 
         switch (strtoupper($method)) {
             case 'POST':
@@ -407,25 +386,38 @@ class TraccarSplitter extends IPSModule
         $error = curl_error($ch);
         curl_close($ch);
 
-        if ($error) {
-            $this->SendDebug('APIRequest Error', $error, 0);
+        if ($error !== '') {
+            $this->SendDebug('APIRequest', "cURL error: {$error}", 0);
             $this->SetStatus(self::STATUS_NO_CONNECTION);
             return false;
         }
 
-        $this->SendDebug('APIRequest Response', "HTTP {$httpCode}: {$response}", 0);
+        $this->SendDebug('APIRequest', "HTTP {$httpCode} (" . strlen((string)$response) . ' bytes)', 0);
 
-        if ($httpCode === 401) {
+        if ($httpCode === 401 && $allowRetry) {
+            $this->SendDebug('APIRequest', 'Session expired, refreshing', 0);
+            $this->WriteAttributeString('SessionCookie', '');
+            if ($this->CreateSession()) {
+                return $this->APIRequest($method, $endpoint, $body, false);
+            }
+            return false;
+        }
+
+        if ($httpCode === 401 || $httpCode === 403) {
             $this->SetStatus(self::STATUS_INVALID_TOKEN);
             return false;
         }
 
         if ($httpCode >= 400) {
-            $this->SendDebug('APIRequest Error', "HTTP Error {$httpCode}", 0);
+            $this->SetStatus(self::STATUS_NO_CONNECTION);
             return false;
         }
 
-        $decoded = json_decode($response, true);
+        if ($this->GetStatus() !== self::STATUS_ACTIVE) {
+            $this->SetStatus(self::STATUS_ACTIVE);
+        }
+
+        $decoded = json_decode((string)$response, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             return $response;
         }
